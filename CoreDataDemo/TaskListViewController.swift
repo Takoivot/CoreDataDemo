@@ -8,12 +8,9 @@
 import UIKit
 import CoreData
 
-protocol TaskViewControllerDelegate {
-    func reloadData()
-}
+
 
 class TaskListViewController: UITableViewController {
-    private let context = (UIApplication.shared.delegate as! AppDelegate).persistentContainer.viewContext
     private let cellID = "task"
     private var taskList: [Task] = []
 
@@ -22,7 +19,9 @@ class TaskListViewController: UITableViewController {
         view.backgroundColor = .white
         tableView.register(UITableViewCell.self, forCellReuseIdentifier: cellID)
         setupNavigationBar()
-        fetchData()
+        StorageManager.shared.fetchData { fetchedTask in
+            self.taskList = fetchedTask}
+        
     }
 
     private func setupNavigationBar() {
@@ -55,24 +54,18 @@ class TaskListViewController: UITableViewController {
     @objc private func addNewTask() {
         showAlert(with: "New Task", and: "What do you want to do?")
     }
-    
-    private func fetchData() {
-        let fetchRequest = Task.fetchRequest()
-        
-        do {
-            taskList = try context.fetch(fetchRequest)
-        } catch let error {
-            print("Failed to fetch data", error)
-        }
-    }
-    
+  
     private func showAlert(with title: String, and message: String) {
         let alert = UIAlertController(title: title, message: message, preferredStyle: .alert)
         let saveAction = UIAlertAction(title: "Save", style: .default) { _ in
             guard let task = alert.textFields?.first?.text, !task.isEmpty else { return }
-            self.save(task)
+            StorageManager.shared.save(task) { task in
+                self.taskList.append(task)
+                let cellIndex = IndexPath(row: self.taskList.count - 1, section: 0)
+                self.tableView.insertRows(at: [cellIndex], with: .automatic)
+            }
         }
-        let cancelAction = UIAlertAction(title: "Cancel", style: .destructive)
+        let cancelAction = UIAlertAction(title: "Cancel", style: .destructive) 
         alert.addAction(saveAction)
         alert.addAction(cancelAction)
         alert.addTextField { textField in
@@ -80,24 +73,7 @@ class TaskListViewController: UITableViewController {
         }
         present(alert, animated: true)
     }
-    
-    private func save(_ taskName: String) {
-        guard let entityDescription = NSEntityDescription.entity(forEntityName: "Task", in: context) else { return }
-        guard let task = NSManagedObject(entity: entityDescription, insertInto: context) as? Task else { return }
-        task.title = taskName
-        taskList.append(task)
-        
-        let cellIndex = IndexPath(row: taskList.count - 1, section: 0)
-        tableView.insertRows(at: [cellIndex], with: .automatic)
-        
-        if context.hasChanges {
-            do {
-                try context.save()
-            } catch let error {
-                print(error)
-            }
-        }
-    }
+  
 }
 
 // MARK: - UITableViewDataSource
@@ -116,10 +92,3 @@ extension TaskListViewController {
     }
 }
 
-// MARK: - TaskViewControllerDelegate
-extension TaskListViewController: TaskViewControllerDelegate {
-    func reloadData() {
-        fetchData()
-        tableView.reloadData()
-    }
-}
