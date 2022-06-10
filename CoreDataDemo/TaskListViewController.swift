@@ -73,6 +73,25 @@ class TaskListViewController: UITableViewController {
         }
         present(alert, animated: true)
     }
+    
+    override func tableView(_ tableView: UITableView, trailingSwipeActionsConfigurationForRowAt indexPath: IndexPath) -> UISwipeActionsConfiguration? {
+        let deleteAction = UIContextualAction(style: .destructive, title: nil) { action,view,complition  in
+            let context = StorageManager.shared.context
+            let deleteTask = self.taskList[indexPath.row]
+            self.taskList.remove(at: indexPath.row)
+            context.delete(deleteTask)
+            
+            StorageManager.shared.saveContext()
+            
+            tableView.deleteRows(at: [indexPath], with: .top)
+            
+        }
+        deleteAction.image = UIImage(systemName: "trash")
+        deleteAction.backgroundColor = .systemRed
+        let configuration = UISwipeActionsConfiguration(actions: [deleteAction])
+        
+        return configuration
+    }
   
 }
 
@@ -91,4 +110,6 @@ extension TaskListViewController {
         return cell
     }
 }
+
+
 
