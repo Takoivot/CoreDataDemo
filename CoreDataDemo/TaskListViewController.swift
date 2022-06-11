@@ -21,9 +21,8 @@ class TaskListViewController: UITableViewController {
         setupNavigationBar()
         StorageManager.shared.fetchData { fetchedTask in
             self.taskList = fetchedTask}
-        
     }
-
+    
     private func setupNavigationBar() {
         title = "Task List"
         navigationController?.navigationBar.prefersLargeTitles = true
@@ -65,7 +64,8 @@ class TaskListViewController: UITableViewController {
                 self.tableView.insertRows(at: [cellIndex], with: .automatic)
             }
         }
-        let cancelAction = UIAlertAction(title: "Cancel", style: .destructive) 
+        let cancelAction = UIAlertAction(title: "Cancel", style: .destructive)
+        
         alert.addAction(saveAction)
         alert.addAction(cancelAction)
         alert.addTextField { textField in
@@ -74,25 +74,28 @@ class TaskListViewController: UITableViewController {
         present(alert, animated: true)
     }
     
-    override func tableView(_ tableView: UITableView, trailingSwipeActionsConfigurationForRowAt indexPath: IndexPath) -> UISwipeActionsConfiguration? {
-        let deleteAction = UIContextualAction(style: .destructive, title: nil) { action,view,complition  in
-            let context = StorageManager.shared.context
-            let deleteTask = self.taskList[indexPath.row]
-            self.taskList.remove(at: indexPath.row)
-            context.delete(deleteTask)
-            
-            StorageManager.shared.saveContext()
-            
-            tableView.deleteRows(at: [indexPath], with: .top)
-            
-        }
-        deleteAction.image = UIImage(systemName: "trash")
-        deleteAction.backgroundColor = .systemRed
-        let configuration = UISwipeActionsConfiguration(actions: [deleteAction])
+    private func showEditAlert(task: Task) {
+        let alert = UIAlertController(title: "Edit Task",
+                                      message: "Enter your editing",
+                                      preferredStyle: .alert)
+    
+    let saveAction = UIAlertAction(title: "Save", style: .default) { _ in
+        guard let taskTitle = alert.textFields?.first?.text, !taskTitle.isEmpty else {return}
+        task.title = taskTitle
         
-        return configuration
+        let textField = alert.textFields?[0]
+        textField?.text = task.title
+        StorageManager.shared.saveContext()
+        self.tableView.reloadData()
     }
-  
+        let cancelAction = UIAlertAction(title: "Cancel", style: .destructive)
+        alert.addAction(saveAction)
+        alert.addAction(cancelAction)
+        alert.addTextField { textField in
+            textField.placeholder = "Edit Task"
+        }
+        present(alert, animated: true)
+    }
 }
 
 // MARK: - UITableViewDataSource
@@ -108,6 +111,33 @@ extension TaskListViewController {
         content.text = task.title
         cell.contentConfiguration = content
         return cell
+    }
+     
+    override func tableView(_ tableView: UITableView, trailingSwipeActionsConfigurationForRowAt indexPath: IndexPath) -> UISwipeActionsConfiguration? {
+        let deleteAction = UIContextualAction(style: .destructive, title: nil) { action,view,complition  in
+            let context = StorageManager.shared.context
+            let deleteTask = self.taskList[indexPath.row]
+            self.taskList.remove(at: indexPath.row)
+            context.delete(deleteTask)
+            
+            StorageManager.shared.saveContext()
+            
+            tableView.deleteRows(at: [indexPath], with: .top)
+        }
+        
+        let editAction = UIContextualAction(style: .normal, title: "Edit") { (action, view, actionPerformed: (Bool) -> ()) in
+            let editTask = self.taskList[indexPath.row]
+            self.showEditAlert(task: editTask)
+            actionPerformed(true)
+        }
+        
+        deleteAction.image = UIImage(systemName: "trash")
+        deleteAction.backgroundColor = .systemRed
+        editAction.backgroundColor = .gray
+        let configuration = UISwipeActionsConfiguration(actions: [deleteAction, editAction])
+        configuration.performsFirstActionWithFullSwipe = false
+        
+        return configuration
     }
 }
 
