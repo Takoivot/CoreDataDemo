@@ -11,8 +11,7 @@ import CoreData
 class StorageManager {
     
     static let shared = StorageManager()
-    private init(){}
-        
+
      var persistentContainer: NSPersistentContainer = {
         let container = NSPersistentContainer(name: "CoreDataDemo")
         container.loadPersistentStores(completionHandler: { (storeDescription, error) in
@@ -58,6 +57,6 @@ class StorageManager {
         saveContext()
     }
     
-   
+    private init(){}
 }
 

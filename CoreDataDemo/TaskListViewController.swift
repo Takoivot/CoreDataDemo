@@ -81,7 +81,6 @@ class TaskListViewController: UITableViewController {
         alert.addTextField()
         let textField = alert.textFields?[0]
         textField?.text = task.title
-        
 
     let saveAction = UIAlertAction(title: "Save", style: .default) { _ in
         guard let taskTitle = alert.textFields?.first?.text, !taskTitle.isEmpty else {return}
