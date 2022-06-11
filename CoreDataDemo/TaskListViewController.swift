@@ -78,22 +78,22 @@ class TaskListViewController: UITableViewController {
         let alert = UIAlertController(title: "Edit Task",
                                       message: "Enter your editing",
                                       preferredStyle: .alert)
-    
+        alert.addTextField()
+        let textField = alert.textFields?[0]
+        textField?.text = task.title
+        
+
     let saveAction = UIAlertAction(title: "Save", style: .default) { _ in
         guard let taskTitle = alert.textFields?.first?.text, !taskTitle.isEmpty else {return}
         task.title = taskTitle
         
-        let textField = alert.textFields?[0]
-        textField?.text = task.title
         StorageManager.shared.saveContext()
         self.tableView.reloadData()
     }
         let cancelAction = UIAlertAction(title: "Cancel", style: .destructive)
         alert.addAction(saveAction)
         alert.addAction(cancelAction)
-        alert.addTextField { textField in
-            textField.placeholder = "Edit Task"
-        }
+        
         present(alert, animated: true)
     }
 }
